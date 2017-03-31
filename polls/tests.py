@@ -101,3 +101,42 @@ class QuestionViewTests(TestCase):
             response.context['latest_question_list'],
             ['<Question: Latest question.>', '<Question: Past question.>']
         )
+
+
+class QuestionIndexDetailTests(TestCase):
+    def test_detail_view_with_a_future_question(self):
+        """
+        The detail view of a question with a pub_date in the future should
+        return a 404 not found.
+        """
+        future_question = create_question("Future question.", days=30)
+        response = self.client.get(reverse('polls:detail', args=(future_question.id,)))
+        self.assertEqual(response.status_code, 404)
+
+    def test_detail_view_with_a_past_question(self):
+        """
+        The detail view of a question with a pub_date in the past should
+        display the question's text.
+        """
+        past_question = create_question("Past question.", days=-30)
+        response = self.client.get(reverse('polls:detail', args=(past_question.id,)))
+        self.assertContains(response, past_question.question_text)
+
+
+"""
+Ideas for more tests
+
+We ought to add a similar get_queryset method to ResultsView and create a new test class for that view.
+It’ll be very similar to what we have just created; in fact there will be a lot of repetition.
+
+We could also improve our application in other ways, adding tests along the way.
+For example, it’s silly that Questions can be published on the site that have no Choices.
+So, our views could check for this, and exclude such Questions.
+Our tests would create a Question without Choices and then test that it’s not published,
+as well as create a similar Question with Choices, and test that it is published.
+
+Perhaps logged-in admin users should be allowed to see unpublished Questions, but not ordinary visitors.
+Again: whatever needs to be added to the software to accomplish this should be accompanied by a test,
+whether you write the test first and then make the code pass the test,
+or work out the logic in your code first and then write a test to prove it.
+"""
